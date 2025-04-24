@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор презентаций | Портфолио</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.11.0/pptxgen.bundle.js"></script>
+    <style>
+        :root {
+            --primary: #6e8efb;
+            --secondary: #a777e3;
+            --dark: #1a1a1a;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slides-wrapper {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            overflow-x: auto;
+            width: 100%;
+            scroll-snap-type: x mandatory;
+        }
+
+        .slide {
+            flex: 0 0 80%;
+            min-width: 0;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            scroll-snap-align: center;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .slide:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .slide-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .slide-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .editable {
+            min-height: 20px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+            cursor: text;
+        }
+
+        .editable:hover {
+            background-color: rgba(110, 142, 251, 0.1);
+        }
+
+        .editable:focus {
+            outline: none;
+            background-color: rgba(110, 142, 251, 0.15);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .about-content {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .about-text {
+            flex: 1;
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .skills-container {
+            flex: 0 0 250px;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .skill {
+            background: rgba(110, 142, 251, 0.1);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .project-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .certificate-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .certificate-image {
+            height: 120px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certificate-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .certificate-details {
+            padding: 15px;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .profile-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border: 5px solid var(--primary);
+        }
+
+        .profile-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-circle .upload-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .welcome-content {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .welcome-text {
+            flex: 1;
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--light);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tool-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                flex: 0 0 90%;
+            }
+            
+            .about-content, .welcome-content {
+                flex-direction: column;
+            }
+            
+            .projects-grid, .contact-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-circle {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="tool-btn" id="bold-btn" title="Жирный текст"><i class="fas fa-bold"></i></button>
+        <button class="tool-btn" id="italic-btn" title="Курсив"><i class="fas fa-italic"></i></button>
+        <button class="tool-btn" id="underline-btn" title="Подчеркивание"><i class="fas fa-underline"></i></button>
+        <button class="tool-btn" id="color-btn" title="Цвет текста"><i class="fas fa-palette"></i></button>
+        <input type="color" id="color-picker" style="display: none;">
+        <button class="tool-btn" id="add-image-btn" title="Добавить изображение"><i class="fas fa-image"></i></button>
+        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+    </div>
+
+    <div class="presentation-container">
+        <div class="slides-wrapper">
+            <!-- Слайд 1: Приветствие -->
+            <div class="slide">
+                <h1 class="slide-title">Добро пожаловать в моё портфолио</h1>
+                <div class="welcome-content">
+                    <div class="welcome-text editable" contenteditable="true" id="welcome-text">
+                        Я <strong>[Ваше имя]</strong>, <strong>[Ваша профессия]</strong> с опытом в <strong>[сфере деятельности]</strong>.
+                        Рад представить вам свои работы и профессиональные навыки.
+                    </div>
+                    <div class="profile-circle" id="profile-circle">
+                        <i class="fas fa-user fa-3x" id="profile-icon"></i>
+                        <div class="upload-btn" id="profile-upload-btn">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" id="profile-upload" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Слайд 2: Обо мне -->
+            <div class="slide">
+                <h2 class="slide-title">Обо мне</h2>
+                <div class="about-content">
+                    <div class="about-text editable" contenteditable="true" id="about-text">
+                        Я профессиональный [профессия] с [X] годами опыта. Специализируюсь на [ключевые навыки]. 
+                        Моя страсть к [специализации] позволяет создавать [тип работ], которые [результат для клиента].
+                        <br><br>
+                        В работе уделяю особое внимание [ключевые принципы], что позволяет достигать [измеримые результаты].
+                        Имею опыт работы с [компании/клиенты]. Всегда открыт для новых вызовов и интересных проектов!
+                    </div>
+                    <div class="skills-container">
+                        <h3>Мои навыки</h3>
+                        <div class="skills-list" id="skills-list">
+                            <div class="skill editable" contenteditable="true">Навык 1</div>
+                            <div class="skill editable" contenteditable="true">Навык 2</div>
+                            <div class="skill editable" contenteditable="true">Навык 3</div>
+                            <div class="skill editable" contenteditable="true">Навык 4</div>
+                        </div>
+                        <button class="control-btn" id="add-skill-btn" style="width: 100%; margin-top: 10px; border-radius: 8px;">
+                            <i class="fas fa-plus"></i> Добавить навык
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Слайд 3: Проекты -->
+            <div class="slide">
+                <h2 class="slide-title">Мои проекты</h2>
+                <div class="projects-grid" id="projects-grid">
+                    <div class="project-card">
+                        <h3 class="editable" contenteditable="true">Название проекта 1</h3>
+                        <p class="editable" contenteditable="true">Описание проекта и использованных технологий</p>
+                    </div>
+                    <div class="project-card">
+                        <h3 class="editable" contenteditable="true">Название проекта 2</h3>
+                        <p class="editable" contenteditable="true">Описание проекта и достигнутых результатов</p>
+                    </div>
+                    <div class="project-card">
+                        <h3 class="editable" contenteditable="true">Название проекта 3</h3>
+                        <p class="editable" contenteditable="true">Описание проекта и отзывы клиента</p>
+                    </div>
+                </div>
+                <button class="control-btn" id="add-project-btn" style="width: 100%; margin-top: 20px; border-radius: 8px;">
+                    <i class="fas fa-plus"></i> Добавить проект
+                </button>
+            </div>
+
+            <!-- Слайд 4: Сертификаты -->
+            <div class="slide">
+                <h2 class="slide-title">Мои сертификаты</h2>
+                <div class="certificates-grid" id="certificates-grid">
+                    <div class="certificate-card">
+                        <div class="certificate-image">
+                            <i class="fas fa-certificate fa-3x" id="cert-icon-1"></i>
+                            <input type="file" class="cert-upload" data-target="cert-icon-1" style="display: none;">
+                        </div>
+                        <div class="certificate-details">
+                            <div class="editable" contenteditable="true">Название сертификата</div>
+                            <div class="editable" contenteditable="true" style="font-size: 0.9rem; color: #666;">Организация, год</div>
+                        </div>
+                    </div>
+                    <div class="certificate-card">
+                        <div class="certificate-image">
+                            <i class="fas fa-certificate fa-3x" id="cert-icon-2"></i>
+                            <input type="file" class="cert-upload" data-target="cert-icon-2" style="display: none;">
+                        </div>
+                        <div class="certificate-details">
+                            <div class="editable" contenteditable="true">Название сертификата</div>
+                            <div class="editable" contenteditable="true" style="font-size: 0.9rem; color: #666;">Организация, год</div>
+                        </div>
+                    </div>
+                    <div class="certificate-card">
+                        <div class="certificate-image">
+                            <i class="fas fa-certificate fa-3x" id="cert-icon-3"></i>
+                            <input type="file" class="cert-upload" data-target="cert-icon-3" style="display: none;">
+                        </div>
+                        <div class="certificate-details">
+                            <div class="editable" contenteditable="true">Название сертификата</div>
+                            <div class="editable" contenteditable="true" style="font-size: 0.9rem; color: #666;">Организация, год</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="control-btn" id="add-certificate-btn" style="width: 100%; margin-top: 20px; border-radius: 8px;">
+                    <i class="fas fa-plus"></i> Добавить сертификат
+                </button>
+            </div>
+
+            <!-- Слайд 5: Контакты -->
+            <div class="slide">
+                <h2 class="slide-title">Контакты</h2>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9rem; color: #777;">Email</div>
+                            <div class="editable" contenteditable="true">example@email.com</div>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9rem; color: #777;">Телефон</div>
+                            <div class="editable" contenteditable="true">+7 (123) 456-78-90</div>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9rem; color: #777;">Локация</div>
+                            <div class="editable" contenteditable="true">Москва, Россия</div>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9rem; color: #777;">Соцсети</div>
+                            <div class="editable" contenteditable="true">@ваш_профиль</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" id="save-btn" title="Сохранить изменения">
+            <i class="fas fa-save"></i>
+        </button>
+        <button class="control-btn" id="add-slide-btn" title="Добавить слайд">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button class="control-btn" id="export-btn" title="Экспорт в PDF">
+            <i class="fas fa-file-pdf"></i>
+        </button>
+    </div>
+
+    <script>
+        // ===================== ГЕНЕРАЦИЯ ТЕКСТА =====================
+        const generateSlide1Texts = (name, profession, field) => [
+            `Приветствую! Я — ${name}, ${profession} с опытом в ${field}. В этом портфолио собраны мои ключевые проекты и профессиональные достижения.`,
+            `Меня зовут ${name}. Я ${profession}, специализируюсь на ${field}. Рад представить вам своё портфолио!`,
+            `${name} — ${profession} с более чем 3-летним опытом в ${field}. Здесь вы найдёте примеры моих работ.`,
+            `Добро пожаловать! Я ${name}, ${profession}. Моя специализация — ${field}. Давайте знакомиться!`,
+            `Я ${name}, ${profession}. Создаю решения в области ${field}. Вдохновляюсь сложными задачами!`
+        ];
+
+        const generateSlide2Texts = (profession, skills) => [
+            `Я ${profession} с опытом работы более 5 лет. Мои ключевые навыки: ${skills.join(', ')}. Всегда открыт к новым вызовам!`,
+            `Профессиональный ${profession}. Специализация: ${skills.slice(0, 3).join(', ')}. Работал с клиентами из разных стран.`,
+            `Как ${profession}, я фокусируюсь на ${skills[0]} и ${skills[1]}. Мои проекты решают реальные бизнес-задачи.`,
+            `${profession} с глубокими знаниями в ${skills[2]}. Умею работать в команде и самостоятельно.`,
+            `Моя цель как ${profession} — создавать качественные продукты. Навыки: ${skills.join(', ')}.`
+        ];
+
+        const generateSlide3Texts = (projectName, skills) => [
+            `Проект «${projectName}» демонстрирует мои навыки в ${skills[0]}. Результат: +30% эффективности.`,
+            `В рамках «${projectName}» я использовал ${skills[1]}. Клиент остался доволен!`,
+            `${projectName} — сложный проект с применением ${skills[2]}. Сроки: 3 месяца.`,
+            `Разработал ${projectName} для решения проблемы X. Технологии: ${skills.join(', ')}.`,
+            `Мой вклад в ${projectName}: архитектура, дизайн и реализация на ${skills[0]}.`
+        ];
+
+        function generateText() {
+            // Слайд 1
+            const name = prompt("Ваше имя:", "Иван Иванов") || "Иван Иванов";
+            const profession = prompt("Ваша профессия:", "Frontend-разработчик") || "Frontend-разработчик";
+            const field = prompt("Сфера деятельности:", "веб-разработка") || "веб-разработка";
+            const welcomeText = document.getElementById('welcome-text');
+            welcomeText.innerHTML = generateSlide1Texts(name, profession, field)[Math.floor(Math.random() * 5)];
+
+            // Слайд 2
+            const skills = Array.from(document.querySelectorAll('.skill'))
+                .map(skill => skill.textContent.trim())
+                .filter(text => text && !text.startsWith('Навык'));
+            const aboutText = document.getElementById('about-text');
+            aboutText.innerHTML = generateSlide2Texts(profession, skills)[Math.floor(Math.random() * 5)];
+
+            // Слайд 3
+            document.querySelectorAll('.project-card').forEach((project, i) => {
+                const title = project.querySelector('h3').textContent || `Проект ${i+1}`;
+                project.querySelector('p').innerHTML = generateSlide3Texts(title, skills)[Math.floor(Math.random() * 5)];
+            });
+        }
+
+        // ===================== ЗАГРУЗКА ФОТО =====================
+        function setupImageUploads() {
+            // Аватар
+            document.getElementById('profile-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const profileCircle = document.getElementById('profile-circle');
+                        profileCircle.innerHTML = `<img src="${e.target.result}" alt="Фото профиля">`;
+                        saveData();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Сертификаты
+            document.querySelectorAll('.cert-upload').forEach((upload, i) => {
+                upload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const certImage = document.querySelectorAll('.certificate-image')[i];
+                            certImage.innerHTML = `<img src="${e.target.result}" alt="Сертификат">`;
+                            saveData();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            });
+        }
+
+        // ===================== ЭКСПОРТ =====================
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'pt', 'a4');
+            
+            for (let i = 0; i < document.querySelectorAll('.slide').length; i++) {
+                const slide = document.querySelectorAll('.slide')[i];
+                const canvas = await html2canvas(slide);
+                const imgData = canvas.toDataURL('image/png');
+                
+                if (i > 0) pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 20, 20, 555, 0);
+            }
+            
+            pdf.save('Презентация.pdf');
+        }
+
+        function exportToPPTX() {
+            const pptx = new PptxGenJS();
+            document.querySelectorAll('.slide').forEach((slide, i) => {
+                const slideElement = pptx.addSlide();
+                slideElement.addText(`Слайд ${i+1}`, { x: 1, y: 1, fontSize: 18 });
+                // Здесь можно добавить html2canvas для преобразования в изображение
+            });
+            pptx.writeFile('Презентация.pptx');
+        }
+
+        // ===================== ИНИЦИАЛИЗАЦИЯ =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupImageUploads();
+            
+            document.getElementById('generate-btn').addEventListener('click', generateText);
+            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+            document.getElementById('export-pptx').addEventListener('click', exportToPPTX);
+        });
+    </script>
+</body>
+</html>
